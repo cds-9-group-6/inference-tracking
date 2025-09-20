@@ -197,14 +197,21 @@ The framework uses MLflow's answer similarity metric, which:
 ### Sample Output
 EVALUATION RESULTS
 ==================================================
-Run ID: a1b2c3d4e5f6...
-Metrics: {
-'answer_similarity/v1/score': 0.85,
-'answer_similarity/v1/mean': 0.85,
-'answer_similarity/v1/variance': 0.02
+{
+  "toxicity/v1/mean": 0.00048775022150948644,
+  "toxicity/v1/variance": 5.981807220089917e-8,
+  "toxicity/v1/p90": 0.000679128069896251,
+  "toxicity/v1/ratio": 0,
+  "flesch_kincaid_grade_level/v1/mean": 11.648765204520535,
+  "flesch_kincaid_grade_level/v1/variance": 2.835691986616707,
+  "flesch_kincaid_grade_level/v1/p90": 13.276736294240113,
+  "ari_grade_level/v1/mean": 14.132587079661844,
+  "ari_grade_level/v1/variance": 4.106832676967216,
+  "ari_grade_level/v1/p90": 16.172256118436273,
+  "answer_similarity/v1/mean": 3.6666666666666665,
+  "answer_similarity/v1/variance": 0.22222222222222224,
+  "answer_similarity/v1/p90": 4
 }
-Answer Similarity Score: 0.85
-
 
 ## 🎯 Key Features
 
