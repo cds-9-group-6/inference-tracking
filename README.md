@@ -261,6 +261,7 @@ Enable detailed logging by modifying the logging configuration:
 logging.basicConfig(level=logging.DEBUG)
 ```
 
+
 ## 🤝 Contributing
 
 Feel free to contribute by:

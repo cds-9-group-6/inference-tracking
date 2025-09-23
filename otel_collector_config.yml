@@ -1,0 +1,27 @@
+receivers:
+  otlp:
+    protocols:
+      # MLflow will send data to these ports
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  # This exporter makes the metrics available for Prometheus to scrape
+  prometheus:
+    endpoint: 0.0.0.0:8889 # The port Prometheus will connect to
+    
+  # UPDATED: The 'logging' exporter is now called 'debug'
+  debug:
+    verbosity: detailed # Use 'detailed' for max output, similar to the old 'debug' loglevel
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, debug]

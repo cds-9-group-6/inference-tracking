@@ -1,0 +1,1 @@
+time=2025-09-19T17:01:43.968Z level=INFO source=types.go:130 msg="inference compute" id=GPU-c6e745da-0732-a81c-aa61-ba9e526b1d74 library=cuda variant=v12 compute=8.6 driver=13.0 name="NVIDIA A10G" total="22.1 GiB" available="21.8 GiB"
