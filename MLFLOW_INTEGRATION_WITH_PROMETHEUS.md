@@ -28,10 +28,17 @@ podman run --platform linux/arm64 \
   --enable-feature=otlp-deltatocumulative
 
 
-podman --platform linux/arm64 \
+podman run --platform linux/arm64 \
   -d --name=grafana \
   -p 3000:3000 \
+  --mount type=bind,source=$(pwd)/grafana/grafana.ini,destination=/etc/grafana/grafana.ini \
+  --mount type=bind,source=$(pwd)/grafana/grafana_provisioning,destination=/etc/grafana/provisioning \
+  -v grafana-data:/var/lib/grafana \
   grafana/grafana-oss:latest
+
+
+
+
 
 podman run -d \
   --name otel-collector \

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+data:
+  grafana.ini: |
+    [server]
+    # In OpenShift, the service will be exposed via a Route.
+    # This should be the public URL.
+    root_url = https://grafana-myproject.apps.cluster-name.com
+    [auth.anonymous]
+    enabled = true
+    org_name = Main Org.
+    org_role = Viewer

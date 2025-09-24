@@ -1,4 +1,5 @@
 import os
+import asyncio
 from openai import OpenAI
 from dotenv import load_dotenv
 import httpx
@@ -85,7 +86,7 @@ def generate_responses_with_ollama(questions):
 
 
 @mlflow.trace(span_type=SpanType.CHAIN,attributes={"span.name": "main"})
-def main():
+async def main():
     """Main execution function"""
     
     # Check environment variables
@@ -108,56 +109,68 @@ def main():
 
     
     
-    # Initialize the evaluator
+    # Initialize the evaluator with OTel metrics support
     evaluator = LLMEvaluator(
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4")
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4"),
+        enable_otel_metrics=True,
+        otel_endpoint=os.getenv("OTEL_OTLP_ENDPOINT", "http://localhost:4317")
     )
-    app_config = {"version": "1.1.0", "model_in_use": "claude-3-sonnet-20240229"}
-    current_env = os.getenv("APP_ENVIRONMENT", "development")
-    current_app_version = app_config.get("version")
-    context_tags = {
-        "environment": current_env,
-        "app_version": current_app_version,}
-    mlflow.update_current_trace(tags=context_tags)
     
-    # Setup MLflow
-    logger.info("Setting up MLflow...")
-    evaluator.setup_mlflow(
-        tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
-        experiment_name=os.getenv("MLFLOW_EXPERIMENT_NAME", "llm_tracing_ollama"),
-        active_model_name=os.getenv("MLFLOW_ACTIVE_MODEL_NAME", "llama318b_model"),
-    )
+    try:
+        app_config = {"version": "1.1.0", "model_in_use": "claude-3-sonnet-20240229"}
+        current_env = os.getenv("APP_ENVIRONMENT", "development")
+        current_app_version = app_config.get("version")
+        context_tags = {
+            "environment": current_env,
+            "app_version": current_app_version,}
+        mlflow.update_current_trace(tags=context_tags)
+        
+        # Setup MLflow
+        logger.info("Setting up MLflow...")
+        evaluator.setup_mlflow(
+            tracking_uri=os.getenv("MLFLOW_TRACKING_URI"),
+            experiment_name=os.getenv("MLFLOW_EXPERIMENT_NAME", "llm_tracing_ollama"),
+            active_model_name=os.getenv("MLFLOW_ACTIVE_MODEL_NAME", "llama318b_model"),
+        )
 
-    # Evaluate responses
-    # session_id = request.headers.get("X-Session-ID", "default-session")
-    # user_id = request.headers.get("X-User-ID", "default-user")
-    logger.info("Starting evaluation...")
-    evaluation_results = evaluator.evaluate_responses(
-        questions=questions,
-        generated_responses=generated_responses,
-        use_judge_model=True,  # This will generate expected responses using GPT-4
-        session_id="session-1",
-        user_id="user-1"
-    )
-    
-    # Print results
-    print("\n" + "="*50)
-    print("EVALUATION RESULTS")
-    print("="*50)
-    print(f"Run ID: {evaluation_results['run_id']}")
-    print(f"Metrics: {evaluation_results['metrics']}")
-    
-    # Extract specific metrics
-    metrics = evaluation_results['metrics']
-    if 'answer_similarity/v1/score' in metrics:
-        print(f"Answer Similarity Score: {metrics['answer_similarity/v1/score']}")
-    
-    return evaluation_results
+        # Evaluate responses (async for better performance)
+        # session_id = request.headers.get("X-Session-ID", "default-session")
+        # user_id = request.headers.get("X-User-ID", "default-user")
+        logger.info("Starting async evaluation...")
+        evaluation_results = await evaluator.evaluate_responses_async(
+            questions=questions,
+            generated_responses=generated_responses,
+            use_judge_model=True,  # This will generate expected responses using GPT-4 concurrently
+            session_id="session-1",
+            user_id="user-1"
+        )
+        
+        # Print results
+        print("\n" + "="*50)
+        print("EVALUATION RESULTS")
+        print("="*50)
+        print(f"Run ID: {evaluation_results['run_id']}")
+        print(f"Metrics: {evaluation_results['metrics']}")
+        
+        # Extract specific metrics
+        metrics = evaluation_results['metrics']
+        if 'answer_similarity/v1/score' in metrics:
+            print(f"Answer Similarity Score: {metrics['answer_similarity/v1/score']}")
+        
+        print("\nMetrics exported to OpenTelemetry Collector for Prometheus scraping")
+        logger.info("All metrics have been sent to OpenTelemetry Collector")
+        
+        return evaluation_results
+        
+    finally:
+        # Ensure proper cleanup of OTel resources
+        logger.info("Shutting down evaluator...")
+        await evaluator.shutdown_async()
 
 
 if __name__ == "__main__":
-    results = main()
+    results = asyncio.run(main())
     logger.info(f"Results: {results}")
 
 
