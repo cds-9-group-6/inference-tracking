@@ -273,3 +273,12 @@ Feel free to contribute by:
 ## 📄 License
 
 This project is open source and available under the MIT License.
+
+
+## Steps
+
+```bash
+
+podman run -it --rm --name mlflow-server --platform linux/arm64 -p 5001:5001 -v ./mlflow-data:/mlruns mlflow-server:arm64-v1
+
+```
